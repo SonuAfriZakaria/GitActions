@@ -13,18 +13,13 @@ cache:
     - vendor/
 
 # Tahap 1: Persiapan (Build)
+# Bagian yang diubah di build_job:
 build_job:
   stage: build
   script:
-    - composer install --prefer-dist --no-ansi --no-interaction --no-progress --scripts-dev
+    - composer install --prefer-dist --no-ansi --no-interaction --no-progress
     - cp .env.example .env
     - php artisan key:generate
-  artifacts:
-    expire_in: 1h
-    paths:
-      - vendor/
-      - .env
-
 # Tahap 2: Pengujian (Test)
 test_job:
   stage: test
