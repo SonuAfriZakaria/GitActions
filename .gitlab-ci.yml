@@ -1,0 +1,31 @@
+default:
+  # Menggunakan username 'rood' dan project 'laravel'
+  image: registry.gitlab.com/rood/laravel:latest
+
+stages:
+  - test
+  - deploy
+
+unit_test:
+  stage: test
+  script:
+    - cp .env.example .env
+    - composer install --no-interaction
+    - php artisan key:generate
+    - vendor/bin/phpunit
+
+deploy_production:
+  stage: deploy
+  script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - ~/.composer/vendor/bin/envoy run deploy --commit="$CI_COMMIT_SHA"
+  environment:
+    name: production
+    url: http://127.0.0.1
+  when: manual
+  only:
+    - main
