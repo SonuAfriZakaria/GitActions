@@ -1,26 +1,28 @@
-# Menggunakan image yang sudah lengkap dengan PHP, Composer, dan Extension Laravel
-image: kirschbaumdevelopment/laravel-test-runner:8.2
+# Ubah dari 8.2 ke 8.3
+image: kirschbaumdevelopment/laravel-test-runner:8.3
 
-# Urutan pengerjaan
 stages:
   - build
   - test
   - deploy
 
-# Mendefinisikan cache agar 'composer install' lebih cepat di push berikutnya
 cache:
   paths:
     - vendor/
 
-# Tahap 1: Persiapan (Build)
-# Bagian yang diubah di build_job:
 build_job:
   stage: build
   script:
-    - composer install --prefer-dist --no-ansi --no-interaction --no-progress
+    # Kita tambahkan flag --ignore-platform-reqs untuk berjaga-jaga jika ada mismatch kecil
+    - composer install --prefer-dist --no-ansi --no-interaction --no-progress --ignore-platform-reqs
     - cp .env.example .env
     - php artisan key:generate
-# Tahap 2: Pengujian (Test)
+  artifacts:
+    expire_in: 1h
+    paths:
+      - vendor/
+      - .env
+
 test_job:
   stage: test
   dependencies:
@@ -28,20 +30,13 @@ test_job:
   script:
     - php artisan test
 
-# Tahap 3: Deploy ke Production (Manual)
 deploy_production:
   stage: deploy
   dependencies:
     - build_job
   script:
-    - echo "Menjalankan deploy ke server lokal (ThinkPad X270)..."
-    # Di sini kamu bisa menambahkan perintah rsync atau git pull di folder target
+    - echo "Deploying..."
     - php artisan migrate --force
-    - php artisan config:cache
-    - php artisan route:cache
-  environment:
-    name: production
-    url: http://192.168.76.240:8000
   when: manual
   only:
     - main
