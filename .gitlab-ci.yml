@@ -1,6 +1,5 @@
-default:
-  # Menggunakan username 'rood' dan project 'laravel'
-  image: registry.gitlab.com/rood/laravel:latest
+# Menggunakan image PHP 8.3 resmi agar sesuai dengan versi laptopmu
+image: php:8.3-cli
 
 stages:
   - test
@@ -8,6 +7,12 @@ stages:
 
 unit_test:
   stage: test
+  before_script:
+    # Menginstal ekstensi zip yang dibutuhkan Composer
+    - apt-get update && apt-get install -y libzip-dev zip git
+    - docker-php-ext-install zip
+    # Install Composer terbaru
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
   script:
     - cp .env.example .env
     - composer install --no-interaction
@@ -16,12 +21,18 @@ unit_test:
 
 deploy_production:
   stage: deploy
+  before_script:
+    # Menginstal SSH agar Runner bisa kirim file ke folder /var/www/app
+    - apt-get update && apt-get install -y openssh-client
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer global require "laravel/envoy"
   script:
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    # Menjalankan Envoy untuk memindahkan file ke folder tujuan
     - ~/.composer/vendor/bin/envoy run deploy --commit="$CI_COMMIT_SHA"
   environment:
     name: production
