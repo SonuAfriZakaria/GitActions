@@ -1,42 +1,52 @@
-# Menggunakan image PHP 8.3 resmi agar sesuai dengan versi laptopmu
-image: php:8.3-cli
+# Menggunakan image yang sudah lengkap dengan PHP, Composer, dan Extension Laravel
+image: kirschbaumdevelopment/laravel-test-runner:8.2
 
+# Urutan pengerjaan
 stages:
+  - build
   - test
   - deploy
 
-unit_test:
-  stage: test
-  before_script:
-    # Menginstal ekstensi zip yang dibutuhkan Composer
-    - apt-get update && apt-get install -y libzip-dev zip git
-    - docker-php-ext-install zip
-    # Install Composer terbaru
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-  script:
-    - cp .env.example .env
-    - composer install --no-interaction
-    - php artisan key:generate
-    - vendor/bin/phpunit
+# Mendefinisikan cache agar 'composer install' lebih cepat di push berikutnya
+cache:
+  paths:
+    - vendor/
 
+# Tahap 1: Persiapan (Build)
+build_job:
+  stage: build
+  script:
+    - composer install --prefer-dist --no-ansi --no-interaction --no-progress --scripts-dev
+    - cp .env.example .env
+    - php artisan key:generate
+  artifacts:
+    expire_in: 1h
+    paths:
+      - vendor/
+      - .env
+
+# Tahap 2: Pengujian (Test)
+test_job:
+  stage: test
+  dependencies:
+    - build_job
+  script:
+    - php artisan test
+
+# Tahap 3: Deploy ke Production (Manual)
 deploy_production:
   stage: deploy
-  before_script:
-    # Menginstal SSH agar Runner bisa kirim file ke folder /var/www/app
-    - apt-get update && apt-get install -y openssh-client
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    - composer global require "laravel/envoy"
+  dependencies:
+    - build_job
   script:
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-    # Menjalankan Envoy untuk memindahkan file ke folder tujuan
-    - ~/.composer/vendor/bin/envoy run deploy --commit="$CI_COMMIT_SHA"
+    - echo "Menjalankan deploy ke server lokal (ThinkPad X270)..."
+    # Di sini kamu bisa menambahkan perintah rsync atau git pull di folder target
+    - php artisan migrate --force
+    - php artisan config:cache
+    - php artisan route:cache
   environment:
     name: production
-    url: http://127.0.0.1
+    url: http://192.168.76.240:8000
   when: manual
   only:
     - main
