@@ -32,11 +32,16 @@ test_job:
 
 deploy_production:
   stage: deploy
-  dependencies:
-    - build_job
   script:
-    - echo "Deploying..."
+    - echo "Deploying to Nginx folder..."
+    - cp -R . /var/www/laravel-live
+    - cd /var/www/laravel-live
+    - composer install --no-dev --optimize-autoloader
     - php artisan migrate --force
-  when: manual
+    - php artisan config:cache
+    - php artisan route:cache
+    - chmod -R 775 storage bootstrap/cache
+    - chown -R $USER:www-data storage bootstrap/cache
+  when: manual # Ganti jadi 'always' kalau mau otomatis tanpa klik
   only:
     - main
