@@ -19,13 +19,12 @@ jobs:
         run: |
           cd /var/www/laravel-live
           
-          # Hapus file cache view supaya tidak bentrok ownership
+          # Hapus cache view supaya tidak bentrok dengan file lama milik user lain
           rm -rf storage/framework/views/*.php
           
           composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
           php artisan migrate --force || echo "Nothing to migrate"
-          php artisan config:clear
-          php artisan cache:clear
           
-          # Cukup jalankan chmod saja, tidak usah chgrp/chown di sini
+          # Pakai 'sudo' di sini HANYA JIKA kamu sudah setting NOPASSWD di visudo seperti sebelumnya
+          # Jika tidak, hapus kata 'sudo' di bawah ini:
           chmod -R 775 storage bootstrap/cache
