@@ -22,5 +22,5 @@ jobs:
           php artisan migrate --force || echo "Migration skipped"
           php artisan config:clear
           php artisan cache:clear
-          # Hapus sudo di bawah ini agar tidak minta password
+          # Hapus sudo di baris bawah ini
           chmod -R 775 storage bootstrap/cache
