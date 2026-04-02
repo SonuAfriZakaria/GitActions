@@ -9,7 +9,7 @@ variables:
   DB_CONNECTION: mysql
   DB_HOST: mysql           # Khusus di dalam GitLab Runner, hostnya bernama 'mysql'
   DB_DATABASE: laravel_db
-  DB_USERNAME: laravel_user
+  DB_USERNAME: root
   DB_PASSWORD: password123
   MYSQL_ROOT_PASSWORD: password123 # Password root untuk service mysql di atas
   MYSQL_DATABASE: laravel_db
