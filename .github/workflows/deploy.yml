@@ -18,7 +18,7 @@ jobs:
       - name: Post-Deployment Commands
         run: |
           cd /var/www/laravel-live
-          composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+          composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
           php artisan migrate --force || echo "Nothing to migrate"
           php artisan config:clear
           php artisan cache:clear
