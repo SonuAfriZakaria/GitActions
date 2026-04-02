@@ -18,14 +18,14 @@ jobs:
       - name: Post-Deployment Commands
         run: |
           cd /var/www/laravel-live
-          
-          # Hapus file cache yang bikin 'Operation not permitted'
+          # Hapus cache view lama
           rm -rf storage/framework/views/*.php
           
           composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
           php artisan migrate --force || echo "Nothing to migrate"
-          php artisan config:clear
-          php artisan cache:clear
           
-          # Sekarang chmod tidak akan error karena file lamanya sudah dihapus
+          # FIX PERMISSION OTOMATIS
+          # Pastikan grupnya adalah www-data agar Nginx bisa baca
+          chgrp -R www-data storage bootstrap/cache
+          # Berikan izin tulis untuk grup
           chmod -R 775 storage bootstrap/cache
