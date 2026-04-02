@@ -18,14 +18,14 @@ jobs:
       - name: Post-Deployment Commands
         run: |
           cd /var/www/laravel-live
-          # Hapus cache view lama
+          
+          # Hapus file cache view supaya tidak bentrok ownership
           rm -rf storage/framework/views/*.php
           
           composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
           php artisan migrate --force || echo "Nothing to migrate"
+          php artisan config:clear
+          php artisan cache:clear
           
-          # FIX PERMISSION OTOMATIS
-          # Pastikan grupnya adalah www-data agar Nginx bisa baca
-          chgrp -R www-data storage bootstrap/cache
-          # Berikan izin tulis untuk grup
+          # Cukup jalankan chmod saja, tidak usah chgrp/chown di sini
           chmod -R 775 storage bootstrap/cache
