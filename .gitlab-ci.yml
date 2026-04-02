@@ -2,18 +2,17 @@ image: kirschbaumdevelopment/laravel-test-runner:8.3
 
 # Tambahkan baris ini agar Runner punya "teman" database MySQL saat testing
 services:
-  - mysql:8.0
-
+  - name: mysql:8.0
+    alias: mysql
 # Variabel agar Laravel di dalam Docker bisa konek ke MySQL Docker juga
-variables:
-  DB_CONNECTION: mysql
-  DB_HOST: mysql           # Khusus di dalam GitLab Runner, hostnya bernama 'mysql'
-  DB_DATABASE: laravel_db
-  DB_USERNAME: root
-  DB_PASSWORD: password123
-  MYSQL_ROOT_PASSWORD: password123 # Password root untuk service mysql di atas
-  MYSQL_DATABASE: laravel_db
-
+  variables:
+    DB_CONNECTION: mysql
+    DB_HOST: mysql   # Dia akan mencari alias di atas
+    DB_DATABASE: laravel_db
+    DB_USERNAME: root
+    DB_PASSWORD: password123
+    MYSQL_ROOT_PASSWORD: password123
+    MYSQL_DATABASE: laravel_db
 stages:
   - build
   - test
