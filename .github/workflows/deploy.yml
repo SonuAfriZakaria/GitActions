@@ -15,7 +15,7 @@ jobs:
         run: |
           echo "Memulai proses sinkronisasi ke folder Nginx..."
           # Menggunakan rsync untuk memindahkan file kecuali .env agar database tidak error
-          rsync -av --exclude='.env' --exclude='.git' --exclude='storage/logs' . /var/www/laravel-live/
+          rsync -av --no-perms --exclude='.env' --exclude='.git' . /var/www/laravel-live/
 
       - name: Post-Deployment Commands
         run: |
