@@ -48,7 +48,7 @@ deploy_production:
   dependencies:
     - build_job
   script:
-    - echo "Deploying to Nginx folder..."
+    - echo "Deploying to Nginx follder..."
     - cp -R . /var/www/laravel-live
     - cd /var/www/laravel-live
     - composer install --no-dev --optimize-autoloader --ignore-platform-reqs
