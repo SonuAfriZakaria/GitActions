@@ -48,26 +48,20 @@ deploy_production:
   dependencies:
     - build_job
   script:
-    - echo "Depsloying to Nginx folder..."
-    # 1. Pindahkan file tapi amankan .env asli laptop
+    - echo "Installing rsync in runner..."
+    # Tambahkan perintah install rsync ini:
+    - apt-get update && apt-get install -y rsync
+    
+    - echo "Deploying to Nginx folder..."
+    # rsync sekarang akan ditemukan
     - rsync -av --exclude='.env' --exclude='storage/database.sqlite' . /var/www/laravel-live/
     
-    # 2. Masuk ke folder live
     - cd /var/www/laravel-live
-    
-    # 3. Jalankan perintah tanpa memicu koneksi database yang berat
     - composer install --no-dev --optimize-autoloader --ignore-platform-reqs
-    
-    # 4. Clear cache agar Laravel baca .env (127.0.0.1) milik laptop
-    - php artisan config:clear
-    - php artisan cache:clear
-    
-    # 5. Jalankan migrasi (Opsional jika ingin otomatis)
-    # Catatan: Ini akan menggunakan database MySQL asli di laptop kamu
     - php artisan migrate --force
-    
-    # 6. Set permission folder
+    - php artisan config:clear
     - chmod -R 775 storage bootstrap/cache
   when: manual
   only:
     - main
+
