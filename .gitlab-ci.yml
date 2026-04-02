@@ -1,5 +1,18 @@
-# Ubah dari 8.2 ke 8.3
 image: kirschbaumdevelopment/laravel-test-runner:8.3
+
+# Tambahkan baris ini agar Runner punya "teman" database MySQL saat testing
+services:
+  - mysql:8.0
+
+# Variabel agar Laravel di dalam Docker bisa konek ke MySQL Docker juga
+variables:
+  DB_CONNECTION: mysql
+  DB_HOST: mysql           # Khusus di dalam GitLab Runner, hostnya bernama 'mysql'
+  DB_DATABASE: laravel_db
+  DB_USERNAME: laravel_user
+  DB_PASSWORD: password123
+  MYSQL_ROOT_PASSWORD: password123 # Password root untuk service mysql di atas
+  MYSQL_DATABASE: laravel_db
 
 stages:
   - build
@@ -13,7 +26,6 @@ cache:
 build_job:
   stage: build
   script:
-    # Kita tambahkan flag --ignore-platform-reqs untuk berjaga-jaga jika ada mismatch kecil
     - composer install --prefer-dist --no-ansi --no-interaction --no-progress --ignore-platform-reqs
     - cp .env.example .env
     - php artisan key:generate
@@ -28,20 +40,25 @@ test_job:
   dependencies:
     - build_job
   script:
+    # Kita perlu migrasi dulu di dalam runner sebelum test dijalankan
+    - php artisan migrate --force
     - php artisan test
 
 deploy_production:
   stage: deploy
+  dependencies:
+    - build_job
   script:
     - echo "Deploying to Nginx folder..."
     - cp -R . /var/www/laravel-live
     - cd /var/www/laravel-live
-    - composer install --no-dev --optimize-autoloader
+    # Tambahkan --ignore-platform-reqs jika php di host sedikit berbeda versinya
+    - composer install --no-dev --optimize-autoloader --ignore-platform-reqs
     - php artisan migrate --force
     - php artisan config:cache
     - php artisan route:cache
+    # Gunakan sudo jika Runner kamu diizinkan sudo, atau pastikan folder sudah 777
     - chmod -R 775 storage bootstrap/cache
-    - chown -R $USER:www-data storage bootstrap/cache
-  when: manual # Ganti jadi 'always' kalau mau otomatis tanpa klik
+  when: manual
   only:
     - main
