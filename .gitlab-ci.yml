@@ -1,18 +1,19 @@
 image: kirschbaumdevelopment/laravel-test-runner:8.3
 
-# Tambahkan baris ini agar Runner punya "teman" database MySQL saat testing
 services:
   - name: mysql:8.0
     alias: mysql
-# Variabel agar Laravel di dalam Docker bisa konek ke MySQL Docker juga
-  variables:
-    DB_CONNECTION: mysql
-    DB_HOST: mysql   # Dia akan mencari alias di atas
-    DB_DATABASE: laravel_db
-    DB_USERNAME: root
-    DB_PASSWORD: password123
-    MYSQL_ROOT_PASSWORD: password123
-    MYSQL_DATABASE: laravel_db
+
+variables:
+  DB_CONNECTION: mysql
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_DATABASE: laravel_db
+  DB_USERNAME: root
+  DB_PASSWORD: password123
+  MYSQL_ROOT_PASSWORD: password123
+  MYSQL_DATABASE: laravel_db
+
 stages:
   - build
   - test
@@ -39,7 +40,6 @@ test_job:
   dependencies:
     - build_job
   script:
-    # Kita perlu migrasi dulu di dalam runner sebelum test dijalankan
     - php artisan migrate --force
     - php artisan test
 
@@ -51,12 +51,10 @@ deploy_production:
     - echo "Deploying to Nginx folder..."
     - cp -R . /var/www/laravel-live
     - cd /var/www/laravel-live
-    # Tambahkan --ignore-platform-reqs jika php di host sedikit berbeda versinya
     - composer install --no-dev --optimize-autoloader --ignore-platform-reqs
     - php artisan migrate --force
     - php artisan config:cache
     - php artisan route:cache
-    # Gunakan sudo jika Runner kamu diizinkan sudo, atau pastikan folder sudah 777
     - chmod -R 775 storage bootstrap/cache
   when: manual
   only:
