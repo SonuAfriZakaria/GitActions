@@ -2,30 +2,25 @@ name: Deploy Laravel via Rsync
 
 on:
   push:
-    branches: [ "main" ] # Memicu deploy saat ada push ke branch main
+    branches: [ "main" ]
 
 jobs:
   deploy:
-    runs-on: self-hosted # Menggunakan runner yang terpasang di ThinkPad
+    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Sync Files with Rsync
         run: |
-          echo "Memulai proses sinkronisasi ke folder Nginx..."
-          # Menggunakan rsync untuk memindahkan file kecuali .env agar database tidak error
           rsync -av --no-perms --exclude='.env' --exclude='.git' . /var/www/laravel-live/
 
       - name: Post-Deployment Commands
         run: |
           cd /var/www/laravel-live
-          # Install dependensi tanpa dev tools
           composer install --no-dev --optimize-autoloader --ignore-platform-reqs
-          # Jalankan migrasi database
-          php artisan migrate --force
-          # Bersihkan cache agar perubahan terbaca
+          php artisan migrate --force || echo "Migration skipped"
           php artisan config:clear
           php artisan cache:clear
-          # Pastikan izin folder benar
-          sudo chmod -R 775 storage bootstrap/cache
+          rm -rf storage/framework/views/*.php
+          chmod -R 775 storage bootstrap/cache
